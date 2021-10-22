@@ -5,7 +5,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.util.function.BiConsumer
 
-internal class AsyncOperationsTest {
+internal class AsyncBatchOperationsTest {
 
     @Test
     @DisplayName("Тест на асинхронность запуска без DSL")
@@ -13,8 +13,8 @@ internal class AsyncOperationsTest {
         val threads = mutableSetOf<String>()
         val threadsErr = mutableSetOf<String>()
         val workList = IntRange(1, 100).map { it.toString() }.toList()
-        AsyncOperations<String, Int, Map<Any, Any>>(
-            doOnFail = BiConsumer { _, _ -> threadsErr.add(Thread.currentThread().name) },
+        AsyncBatchOperations<String, Int, Map<Any, Any>>(
+            doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
             doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
             resultCombiner = { mapOf() }
         ).applyBatchOfValues(
@@ -25,4 +25,6 @@ internal class AsyncOperationsTest {
         Assertions.assertTrue(threads.size > 1)
         Assertions.assertTrue(threadsErr.size == 0)
     }
+
+
 }

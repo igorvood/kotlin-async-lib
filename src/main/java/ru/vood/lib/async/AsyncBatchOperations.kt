@@ -8,7 +8,7 @@ import java.util.function.Function
 
 typealias ReprocessCondition = (Exception) -> Boolean
 
-class AsyncOperations<T, R, out AGG>(
+class AsyncBatchOperations<T, R, out AGG>(
     private val doOnFail: BiConsumer<in T, Throwable>,
     private val doOnSuccess: BiConsumer<in T, in R>,
     private val resultCombiner: Function<Map<T, Try<R>>, out AGG>
