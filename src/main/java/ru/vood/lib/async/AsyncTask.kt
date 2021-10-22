@@ -1,7 +1,8 @@
 package ru.vood.lib.async
 
-import ru.vood.lib.async.AsyncValue.Companion.DEFAULT_REPROCESS_ATTEMPTS
-import ru.vood.lib.async.AsyncValue.Companion.DEFAULT_TIMEOUT
+import ru.vood.lib.async.AsyncBatchOperations.Companion.DEFAULT_REPROCESS_ATTEMPTS
+import ru.vood.lib.async.AsyncBatchOperations.Companion.DEFAULT_TIMEOUT
+
 
 data class AsyncTask<T, R>(
     val value: T,

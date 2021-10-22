@@ -1,8 +1,6 @@
 package ru.vood.lib.async
 
 import kotlinx.coroutines.*
-import ru.vood.lib.async.AsyncValue.Companion.DEFAULT_REPROCESS_ATTEMPTS
-import ru.vood.lib.async.AsyncValue.Companion.DEFAULT_TIMEOUT
 import ru.vood.lib.async.Either.Companion.left
 import ru.vood.lib.async.Either.Companion.right
 
@@ -15,22 +13,6 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
     private val job: CompletableJob = SupervisorJob(),
     private val crScope: CoroutineScope = CoroutineScope(Dispatchers.IO + job),
 ) {
-
-    constructor(
-        batch: Iterable<T>,
-        work: (T) -> R,
-        resultCombiner: (Map<T, Try<R>>) -> AGG,
-        timeout: Long = DEFAULT_TIMEOUT,
-        reprocessAttempts: Int = DEFAULT_REPROCESS_ATTEMPTS,
-        job: CompletableJob = SupervisorJob(),
-        crScope: CoroutineScope = CoroutineScope(Dispatchers.IO + job),
-    ) : this(
-        batch = batch.map { AsyncValue(it, timeout, reprocessAttempts) },
-        work = work,
-        resultCombiner = resultCombiner,
-        job = job,
-        crScope = crScope,
-    )
 
     operator fun invoke(
         doOnFail: (T, Throwable) -> Unit = { _, _ -> },
@@ -116,5 +98,41 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
 
     companion object {
         val DEFAULT_REPROCESS_CONDITION: ReprocessCondition = { it is TimeoutCancellationException }
+
+        const val DEFAULT_TIMEOUT = 1000L
+        const val DEFAULT_REPROCESS_ATTEMPTS = 0
+
+        inline fun <reified T, reified R, reified AGG> asyncBatch(
+            batch: Iterable<T>,
+            noinline work: (T) -> R,
+            noinline resultCombiner: (Map<T, Try<R>>) -> AGG,
+            timeout: Long = DEFAULT_TIMEOUT,
+            reprocessAttempts: Int = DEFAULT_REPROCESS_ATTEMPTS,
+            job: CompletableJob = SupervisorJob(),
+            crScope: CoroutineScope = CoroutineScope(Dispatchers.IO + job),
+        ): AsyncBatchOperations<T, R, AGG> = AsyncBatchOperations(
+            batch = batch.map { AsyncValue(it, timeout, reprocessAttempts) },
+            work = work,
+            resultCombiner = resultCombiner,
+            job = job,
+            crScope = crScope,
+        )
+
+        inline fun <reified T, reified R> asyncBatch(
+            batch: Iterable<T>,
+            noinline work: (T) -> R,
+            timeout: Long = DEFAULT_TIMEOUT,
+            reprocessAttempts: Int = DEFAULT_REPROCESS_ATTEMPTS,
+            job: CompletableJob = SupervisorJob(),
+            crScope: CoroutineScope = CoroutineScope(Dispatchers.IO + job),
+        ): AsyncBatchOperations<T, R, Int> = AsyncBatchOperations(
+            batch = batch.map { AsyncValue(it, timeout, reprocessAttempts) },
+            work = work,
+            resultCombiner = { it.size },
+            job = job,
+            crScope = crScope,
+        )
+
+
     }
 }
