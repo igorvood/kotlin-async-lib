@@ -3,14 +3,13 @@ package ru.vood.lib.async
 import kotlinx.coroutines.*
 import ru.vood.lib.async.Either.Companion.left
 import ru.vood.lib.async.Either.Companion.right
-import java.util.function.BiConsumer
 import java.util.function.Function
 
 internal typealias ReprocessCondition = (Exception) -> Boolean
 
 class AsyncBatchOperations<T, R, out AGG>(
-    private val doOnFail: (T, Throwable)->Unit,
-    private val doOnSuccess: BiConsumer<in T, in R>,
+    private val doOnFail: (T, Throwable) -> Unit,
+    private val doOnSuccess: (T, R) -> Unit,
     private val resultCombiner: Function<Map<T, Try<R>>, out AGG>
 ) {
     private val job = SupervisorJob()
@@ -54,7 +53,7 @@ class AsyncBatchOperations<T, R, out AGG>(
                         val r = withTimeout(task.timeOut) {
                             task.fn(task.value)
                         }
-                        doOnSuccess.accept(task.value, r)
+                        doOnSuccess(task.value, r)
                         val success: Try<R> = Success(r)
                         return@async task.value to success
                     } catch (e: Exception) {
