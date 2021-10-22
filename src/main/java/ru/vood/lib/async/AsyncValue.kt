@@ -6,7 +6,7 @@ data class AsyncValue<out T>(
     val repressAttempts: Int = DEFAULT_REPRESS_ATTEMPTS,
 ) {
     companion object {
-        private const val DEFAULT_TIMEOUT = 1000L
-        private const val DEFAULT_REPRESS_ATTEMPTS = 0
+        internal const val DEFAULT_TIMEOUT = 1000L
+        internal const val DEFAULT_REPRESS_ATTEMPTS = 0
     }
 }
