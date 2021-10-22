@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 import ru.vood.lib.async.AsyncBatchOperations.Companion.DEFAULT_REPROCESS_CONDITION
 import ru.vood.lib.async.AsyncValue.Companion.DEFAULT_REPROCESS_ATTEMPTS
 import ru.vood.lib.async.AsyncValue.Companion.DEFAULT_TIMEOUT
-import ru.vood.lib.async.dsl.AsyncBatchOperationsBuilder
 
 internal class AsyncBatchOperationsTest {
 
@@ -28,12 +27,13 @@ internal class AsyncBatchOperationsTest {
             },
             doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
             doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
-            resultCombiner = { mapOf() }
+            resultCombiner = { mapOf() },
+            work = { s: String -> s.toInt() },
         ).applyBatchOfValues(
 
             reprocessCondition = DEFAULT_REPROCESS_CONDITION,
-            work = { s: String -> s.toInt() }
-        )
+
+            )
 
         Assertions.assertTrue(threads.size > 1)
         Assertions.assertTrue(threadsErr.size == 0)

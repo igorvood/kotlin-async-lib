@@ -8,6 +8,7 @@ internal typealias ReprocessCondition = (Exception) -> Boolean
 
 class AsyncBatchOperations<T, R, out AGG> internal constructor(
     private val batch: Iterable<AsyncValue<T>>,
+    private val work: (T) -> R,
     private val doOnFail: (T, Throwable) -> Unit,
     private val doOnSuccess: (T, R) -> Unit,
     private val resultCombiner: (Map<T, Try<R>>) -> AGG
@@ -17,7 +18,6 @@ class AsyncBatchOperations<T, R, out AGG> internal constructor(
 
     fun applyBatchOfValues(
         reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION,
-        work: (T) -> R
     ): AGG {
         return runBlocking {
             val result = doTask(
