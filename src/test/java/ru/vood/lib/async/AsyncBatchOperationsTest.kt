@@ -21,8 +21,8 @@ internal class AsyncBatchOperationsTest {
             batch = workList.map {
                 AsyncValue(
                     value = it,
-                    timeout = DEFAULT_TIMEOUT,
-                    reprocessAttempts = DEFAULT_REPROCESS_ATTEMPTS
+                    timeout = 2000,
+                    reprocessAttempts = 0
                 )
             },
             resultCombiner = { it.size },
@@ -33,6 +33,29 @@ internal class AsyncBatchOperationsTest {
             doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
             reprocessCondition = DEFAULT_REPROCESS_CONDITION,
             )
+
+        Assertions.assertTrue(threads.size > 1)
+        Assertions.assertTrue(threadsErr.size == 0)
+        Assertions.assertEquals(applyBatchOfValues, workList.size)
+
+    }
+
+    @Test
+    @DisplayName("Тест на асинхронность запуска без DSL, вторичный конструктор")
+    fun testOnAsyncRunOtherConstructor() {
+        val threads = mutableSetOf<String>()
+        val threadsErr = mutableSetOf<String>()
+
+        val asyncBatchOperations = AsyncBatchOperations(
+            batch = workList,
+            resultCombiner = { it.size },
+            work = { s: String -> s.toInt() },
+        )
+        val applyBatchOfValues = asyncBatchOperations(
+            doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
+            doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
+            reprocessCondition = DEFAULT_REPROCESS_CONDITION,
+        )
 
         Assertions.assertTrue(threads.size > 1)
         Assertions.assertTrue(threadsErr.size == 0)
