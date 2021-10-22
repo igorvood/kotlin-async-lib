@@ -31,9 +31,7 @@ internal class AsyncBatchOperationsTest {
         val applyBatchOfValues = asyncBatchOperations(
             doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
             doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
-
             reprocessCondition = DEFAULT_REPROCESS_CONDITION,
-
             )
 
         Assertions.assertTrue(threads.size > 1)
