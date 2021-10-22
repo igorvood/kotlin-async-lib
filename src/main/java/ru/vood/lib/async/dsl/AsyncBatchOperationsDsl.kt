@@ -10,7 +10,7 @@ class AsyncBatchOperationsBuilder<T, R, AGG>(
     var b: Iterable<T> = Iterable { TODO("Ф-ция  work должна быть указана") },
     var batch: Iterable<AsyncValue<T>> = Iterable { TODO("Ф-ция  work должна быть указана") },
     var work: Function<T, R> = Function { TODO("Ф-ция  work должна быть указана") },
-    var resultCombiner: Function<Map<T, Try<R>>, AGG> = Function { TODO("Ф-ция resultCombiner должна быть указана") },
+    var resultCombiner: (Map<T, Try<R>>)-> AGG = { TODO("Ф-ция resultCombiner должна быть указана") },
     var reprocessCondition: ReprocessCondition = AsyncBatchOperations.DEFAULT_REPROCESS_CONDITION,
     var doOnFail: (T, Throwable) -> Unit = { _, _ -> },
     var doOnSuccess: (T, R) -> Unit = { _, _ -> },

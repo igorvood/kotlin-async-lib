@@ -7,10 +7,10 @@ import java.util.function.Function
 
 internal typealias ReprocessCondition = (Exception) -> Boolean
 
-class AsyncBatchOperations<T, R, out AGG>(
+class AsyncBatchOperations<T, R, out AGG> internal constructor(
     private val doOnFail: (T, Throwable) -> Unit,
     private val doOnSuccess: (T, R) -> Unit,
-    private val resultCombiner: Function<Map<T, Try<R>>, out AGG>
+    private val resultCombiner: (Map<T, Try<R>>) -> AGG
 ) {
     private val job = SupervisorJob()
     private val crScope = CoroutineScope(Dispatchers.IO + job)
@@ -33,9 +33,8 @@ class AsyncBatchOperations<T, R, out AGG>(
                     { it }
                 )
             }
-            return@runBlocking resultCombiner.apply(res)
+            return@runBlocking resultCombiner(res)
         }
-
     }
 
     private suspend fun doTask(
