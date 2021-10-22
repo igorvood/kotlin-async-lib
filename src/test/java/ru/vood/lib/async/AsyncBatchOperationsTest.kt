@@ -3,7 +3,6 @@ package ru.vood.lib.async
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import java.util.function.BiConsumer
 
 internal class AsyncBatchOperationsTest {
 
