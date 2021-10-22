@@ -6,7 +6,7 @@ import ru.vood.lib.async.Either.Companion.right
 import java.util.function.BiConsumer
 import java.util.function.Function
 
-typealias ReprocessCondition = (Exception) -> Boolean
+internal typealias ReprocessCondition = (Exception) -> Boolean
 
 class AsyncBatchOperations<T, R, out AGG>(
     private val doOnFail: BiConsumer<in T, Throwable>,
@@ -24,7 +24,7 @@ class AsyncBatchOperations<T, R, out AGG>(
         return runBlocking {
             val result = doTask(
                 crScope,
-                batch.map { t -> AsyncTask(t.value, t.timeout, t.repressAttempts) { work.apply(t.value) } },
+                batch.map { t -> AsyncTask(t.value, t.timeout, t.reprocessAttempts) { work.apply(t.value) } },
                 reprocessCondition
             )
 
