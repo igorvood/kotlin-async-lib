@@ -14,9 +14,9 @@ internal class AsyncOperationsTest {
         val threadsErr = mutableSetOf<String>()
         val workList = IntRange(1, 100).map { it.toString() }.toList()
         AsyncOperations<String, Int, Map<Any, Any>>(
-            doOnFail = BiConsumer { v, ex -> threadsErr.add(Thread.currentThread().name) },
-            doOnSuccess = { t, r -> threads.add(Thread.currentThread().name) },
-            resultCombiner = { map -> mapOf() }
+            doOnFail = BiConsumer { _, _ -> threadsErr.add(Thread.currentThread().name) },
+            doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
+            resultCombiner = { mapOf() }
         ).applyBatchOfValues(
             workList.map { AsyncValue(it) },
             work = { s: String -> s.toInt() }
