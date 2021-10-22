@@ -22,7 +22,7 @@ class AsyncBatchOperationsBuilder<T, R, AGG>(
             resultCombiner = this.resultCombiner,
             batch = this.batch,
             work = this.work,
-        ).applyBatchOfValues(
+        ).run(
             doOnFail = this.doOnFail,
             doOnSuccess = this.doOnSuccess,
             reprocessCondition = this.reprocessCondition,

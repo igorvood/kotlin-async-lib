@@ -28,7 +28,7 @@ internal class AsyncBatchOperationsTest {
             resultCombiner = { it.size },
             work = { s: String -> s.toInt() },
         )
-        val applyBatchOfValues = asyncBatchOperations.applyBatchOfValues(
+        val applyBatchOfValues = asyncBatchOperations(
             doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
             doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
 

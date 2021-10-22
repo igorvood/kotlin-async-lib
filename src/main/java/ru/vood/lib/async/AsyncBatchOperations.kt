@@ -1,22 +1,46 @@
 package ru.vood.lib.async
 
 import kotlinx.coroutines.*
+import ru.vood.lib.async.AsyncValue.Companion.DEFAULT_REPROCESS_ATTEMPTS
+import ru.vood.lib.async.AsyncValue.Companion.DEFAULT_TIMEOUT
 import ru.vood.lib.async.Either.Companion.left
 import ru.vood.lib.async.Either.Companion.right
 
 internal typealias ReprocessCondition = (Exception) -> Boolean
 
-class AsyncBatchOperations<T, R, out AGG> internal constructor(
+class AsyncBatchOperations<T, R, out AGG> constructor(
     private val batch: Iterable<AsyncValue<T>>,
     private val work: (T) -> R,
-    private val resultCombiner: (Map<T, Try<R>>) -> AGG
+    private val resultCombiner: (Map<T, Try<R>>) -> AGG,
+    private val job: CompletableJob = SupervisorJob(),
+    private val crScope: CoroutineScope = CoroutineScope(Dispatchers.IO + job),
 ) {
-    private val job = SupervisorJob()
-    private val crScope = CoroutineScope(Dispatchers.IO + job)
 
-    fun applyBatchOfValues(
-        doOnFail: (T, Throwable) -> Unit,
-        doOnSuccess: (T, R) -> Unit,
+    constructor(
+        batch: Iterable<T>,
+        work: (T) -> R,
+        resultCombiner: (Map<T, Try<R>>) -> AGG,
+        timeout: Long = DEFAULT_TIMEOUT,
+        reprocessAttempts: Int = DEFAULT_REPROCESS_ATTEMPTS,
+        job: CompletableJob = SupervisorJob(),
+        crScope: CoroutineScope = CoroutineScope(Dispatchers.IO + job),
+    ) : this(
+        batch = batch.map { AsyncValue(it, timeout, reprocessAttempts) },
+        work = work,
+        resultCombiner = resultCombiner,
+        job = job,
+        crScope = crScope,
+    )
+
+    operator fun invoke(
+        doOnFail: (T, Throwable) -> Unit = { _, _ -> },
+        doOnSuccess: (T, R) -> Unit = { _, _ -> },
+        reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION,
+    ): AGG = run(doOnFail, doOnSuccess, reprocessCondition)
+
+    fun run(
+        doOnFail: (T, Throwable) -> Unit = { _, _ -> },
+        doOnSuccess: (T, R) -> Unit = { _, _ -> },
         reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION,
     ): AGG {
         return runBlocking {
