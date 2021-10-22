@@ -1,7 +1,6 @@
 package ru.vood.lib.async
 
 import io.mockk.coVerify
-import io.mockk.confirmVerified
 import io.mockk.spyk
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions
@@ -16,7 +15,7 @@ internal class AsyncBatchOperationsTest {
     private val workList = IntRange(1, 100).map { it.toString() }.toList()
 
     @Test
-    @DisplayName("Тест на асинхронность запуска без DSL, Кастомный комбайнер, с ошибками")
+    @DisplayName("Тест на асинхронность запуска без DSL, кастомный комбайнер, с ошибками, без репроцессинга")
     fun testOnAsyncRun() {
         val workCnt = AtomicInteger(0)
         val workCntSuccess = AtomicInteger(0)
@@ -28,13 +27,128 @@ internal class AsyncBatchOperationsTest {
             .map { it.toInt() }
             .map { if (it % 3 == 0) it.toString() else it.toString() + "q" }
 
+        val (asyncBatchOperations, applyBatchOfValues) = testCase(
+            brokenWorkList,
+            workCnt,
+            threadsRun,
+            workCntError,
+            threadsErr,
+            workCntSuccess,
+            threads
+        )
+
+        Assertions.assertEquals(
+            brokenWorkList.size,
+            workCnt.get()
+        ) { "Число запусков рабочей ф-ции не равно ожидаемому" }
+        val cntErr = 67
+        Assertions.assertEquals(cntErr, workCntError.get()) { "Число запусков обработчика ошибок не равно ожидаемому" }
+        val cntOk = 33
+        Assertions.assertEquals(
+            cntOk,
+            workCntSuccess.get()
+        ) { "Число запусков обработчика успешных запусков не равно ожидаемому" }
+        Assertions.assertTrue(threads.size > 1)
+        Assertions.assertTrue(threadsErr.size > 1)
+        Assertions.assertTrue(threadsRun.size > 1)
+        val (list, list1) = applyBatchOfValues
+
+        Assertions.assertEquals(
+            cntOk,
+            list.size
+        ) { "Комбайнер отработл не верно, Число запусков обработчика успешных запусков не равно ожидаемому" }
+        Assertions.assertEquals(
+            cntErr,
+            list1.size
+        ) { "Комбайнер отработл не верно, Число запусков обработчика ошибок запусков не равно ожидаемому" }
+
+        verify(exactly = 1) {
+            asyncBatchOperations.invoke(any(), any(), DEFAULT_REPROCESS_CONDITION)
+            asyncBatchOperations.run(any(), any(), DEFAULT_REPROCESS_CONDITION)
+        }
+
+        coVerify(exactly = 1) {
+            asyncBatchOperations.doTask(any(), any(), DEFAULT_REPROCESS_CONDITION, any(), any())
+        }
+
+//        confirmVerified(asyncBatchOperations)
+    }
+
+    @Test
+    @DisplayName("Тест на асинхронность запуска без DSL, кастомный комбайнер, с ошибками, c репроцессингом")
+    fun testOnAsyncRun2() {
+        val workCnt = AtomicInteger(0)
+        val workCntSuccess = AtomicInteger(0)
+        val workCntError = AtomicInteger(0)
+        val threads = mutableSetOf<String>()
+        val threadsRun = mutableSetOf<String>()
+        val threadsErr = mutableSetOf<String>()
+        val brokenWorkList = workList
+            .map { it.toInt() }
+            .map { if (it % 3 == 0) it.toString() else it.toString() + "q" }
+
+        val (asyncBatchOperations, applyBatchOfValues) = testCase(
+            brokenWorkList,
+            workCnt,
+            threadsRun,
+            workCntError,
+            threadsErr,
+            workCntSuccess,
+            threads,
+            reprocessAttempts = 2,
+        )
+        Assertions.assertEquals(
+            brokenWorkList.size,
+            workCnt.get()
+        ) { "Число запусков рабочей ф-ции не равно ожидаемому" }
+        val cntErr = 67
+        Assertions.assertEquals(cntErr, workCntError.get()) { "Число запусков обработчика ошибок не равно ожидаемому" }
+        val cntOk = 33
+        Assertions.assertEquals(
+            cntOk,
+            workCntSuccess.get()
+        ) { "Число запусков обработчика успешных запусков не равно ожидаемому" }
+        Assertions.assertTrue(threads.size > 1)
+        Assertions.assertTrue(threadsErr.size > 1)
+        Assertions.assertTrue(threadsRun.size > 1)
+        val (list, list1) = applyBatchOfValues
+
+        Assertions.assertEquals(
+            cntOk,
+            list.size
+        ) { "Комбайнер отработл не верно, Число запусков обработчика успешных запусков не равно ожидаемому" }
+        Assertions.assertEquals(
+            cntErr,
+            list1.size
+        ) { "Комбайнер отработл не верно, Число запусков обработчика ошибок запусков не равно ожидаемому" }
+
+        verify(exactly = 1) {
+            asyncBatchOperations.invoke(any(), any(), DEFAULT_REPROCESS_CONDITION)
+            asyncBatchOperations.run(any(), any(), DEFAULT_REPROCESS_CONDITION)
+        }
+
+        coVerify(exactly = 1) {
+            asyncBatchOperations.doTask(any(), any(), DEFAULT_REPROCESS_CONDITION, any(), any())
+        }
+    }
+
+    private fun testCase(
+        workList: List<String>,
+        workCnt: AtomicInteger,
+        threadsRun: MutableSet<String>,
+        workCntError: AtomicInteger,
+        threadsErr: MutableSet<String>,
+        workCntSuccess: AtomicInteger,
+        threads: MutableSet<String>,
+        reprocessAttempts: Int = 0,
+    ): Pair<AsyncBatchOperations<String, Int, Pair<List<Try<Int>>, List<Try<Int>>>>, Pair<List<Try<Int>>, List<Try<Int>>>> {
         val asyncBatchOperations = spyk(
             AsyncBatchOperations(
-                batch = brokenWorkList.map {
+                batch = workList.map {
                     AsyncValue(
                         value = it,
                         timeout = 2000,
-                        reprocessAttempts = 0
+                        reprocessAttempts = reprocessAttempts
                     )
                 },
                 resultCombiner = { m ->
@@ -64,40 +178,7 @@ internal class AsyncBatchOperationsTest {
             },
             reprocessCondition = DEFAULT_REPROCESS_CONDITION,
         )
-
-        Assertions.assertEquals(
-            brokenWorkList.size,
-            workCnt.get()
-        ) { "Число запусков рабочей ф-ции не равно ожидаемому" }
-        Assertions.assertEquals(67, workCntError.get()) { "Число запусков обработчика ошибок не равно ожидаемому" }
-        Assertions.assertEquals(
-            33,
-            workCntSuccess.get()
-        ) { "Число запусков обработчика успешных запусков не равно ожидаемому" }
-        Assertions.assertTrue(threads.size > 1)
-        Assertions.assertTrue(threadsErr.size > 1)
-        Assertions.assertTrue(threadsRun.size > 1)
-        val (list, list1) = applyBatchOfValues
-
-        Assertions.assertEquals(
-            33,
-            list.size
-        ) { "Комбайнер отработл не верно, Число запусков обработчика успешных запусков не равно ожидаемому" }
-        Assertions.assertEquals(
-            67,
-            list1.size
-        ) { "Комбайнер отработл не верно, Число запусков обработчика ошибок запусков не равно ожидаемому" }
-
-        verify(exactly = 1) {
-            asyncBatchOperations.invoke(any(), any(), DEFAULT_REPROCESS_CONDITION)
-            asyncBatchOperations.run(any(), any(), DEFAULT_REPROCESS_CONDITION)
-        }
-
-        coVerify(exactly = 1) {
-            asyncBatchOperations.doTask(any(), any(), DEFAULT_REPROCESS_CONDITION, any(), any())
-        }
-
-        confirmVerified(asyncBatchOperations)
+        return Pair(asyncBatchOperations, applyBatchOfValues)
     }
 
     @Test
