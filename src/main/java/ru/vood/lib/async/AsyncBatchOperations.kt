@@ -9,21 +9,23 @@ internal typealias ReprocessCondition = (Exception) -> Boolean
 class AsyncBatchOperations<T, R, out AGG> internal constructor(
     private val batch: Iterable<AsyncValue<T>>,
     private val work: (T) -> R,
-    private val doOnFail: (T, Throwable) -> Unit,
-    private val doOnSuccess: (T, R) -> Unit,
     private val resultCombiner: (Map<T, Try<R>>) -> AGG
 ) {
     private val job = SupervisorJob()
     private val crScope = CoroutineScope(Dispatchers.IO + job)
 
     fun applyBatchOfValues(
+        doOnFail: (T, Throwable) -> Unit,
+        doOnSuccess: (T, R) -> Unit,
         reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION,
     ): AGG {
         return runBlocking {
             val result = doTask(
                 crScope,
                 batch.map { t -> AsyncTask(t.value, t.timeout, t.reprocessAttempts) { work(t.value) } },
-                reprocessCondition
+                reprocessCondition,
+                doOnFail,
+                doOnSuccess
             )
 
             val res = result.associate { either ->
@@ -39,7 +41,9 @@ class AsyncBatchOperations<T, R, out AGG> internal constructor(
     private suspend fun doTask(
         scope: CoroutineScope,
         asyncTaskList: List<AsyncTask<T, R>>,
-        reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION
+        reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION,
+        doOnFail: (T, Throwable) -> Unit,
+        doOnSuccess: (T, R) -> Unit
     ): List<Either<AsyncTask<T, R>, Pair<T, Try<R>>>> {
         if (asyncTaskList.isEmpty()) {
             return listOf()
@@ -83,7 +87,7 @@ class AsyncBatchOperations<T, R, out AGG> internal constructor(
                     { throw java.lang.IllegalStateException("async either not partitioned") }
                 )
             }
-        return intermediate + doTask(scope, finishing, reprocessCondition)
+        return intermediate + doTask(scope, finishing, reprocessCondition, doOnFail, doOnSuccess)
     }
 
     companion object {

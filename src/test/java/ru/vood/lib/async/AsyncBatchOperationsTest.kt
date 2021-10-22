@@ -25,11 +25,11 @@ internal class AsyncBatchOperationsTest {
                     reprocessAttempts = DEFAULT_REPROCESS_ATTEMPTS
                 )
             },
-            doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
-            doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
             resultCombiner = { mapOf() },
             work = { s: String -> s.toInt() },
         ).applyBatchOfValues(
+            doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
+            doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
 
             reprocessCondition = DEFAULT_REPROCESS_CONDITION,
 

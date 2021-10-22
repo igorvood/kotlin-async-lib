@@ -19,13 +19,12 @@ class AsyncBatchOperationsBuilder<T, R, AGG>(
 
     fun build(): AGG {
         return AsyncBatchOperations(
-            doOnFail = this.doOnFail,
-            doOnSuccess = this.doOnSuccess,
             resultCombiner = this.resultCombiner,
             batch = this.batch,
             work = this.work,
         ).applyBatchOfValues(
-
+            doOnFail = this.doOnFail,
+            doOnSuccess = this.doOnSuccess,
             reprocessCondition = this.reprocessCondition,
 
         )
