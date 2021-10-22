@@ -128,7 +128,11 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
         ): AsyncBatchOperations<T, R, Int> = AsyncBatchOperations(
             batch = batch.map { AsyncValue(it, timeout, reprocessAttempts) },
             work = work,
-            resultCombiner = { it.size },
+            resultCombiner = { map ->
+                val count = map.filter { ent -> ent is Failure<*> }.count()
+                if (count != 0) error("result async run contains $count exception of ${map.size} runs")
+                count
+            },
             job = job,
             crScope = crScope,
         )
