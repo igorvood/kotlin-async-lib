@@ -20,7 +20,7 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
         reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION,
     ): AGG = run(doOnFail, doOnSuccess, reprocessCondition)
 
-    fun run(
+    internal fun run(
         doOnFail: (T, Throwable) -> Unit = { _, _ -> },
         doOnSuccess: (T, R) -> Unit = { _, _ -> },
         reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION,
@@ -44,7 +44,7 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
         }
     }
 
-    private suspend fun doTask(
+    internal suspend fun doTask(
         scope: CoroutineScope,
         asyncTaskList: List<AsyncTask<T, R>>,
         reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION,
@@ -75,11 +75,11 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
             .map { resWithTask ->
                 val (valueRes, asyncTask) = resWithTask
                 val (value, result) = valueRes
-                when (val tryR = result) {
+                when (result) {
                     is Success -> right(valueRes)
                     is Failure ->
-                        if (asyncTask.attemptsLeft <= 0 || !reprocessCondition(tryR.exept))
-                            right(value to Failure(tryR.exept))
+                        if (asyncTask.attemptsLeft <= 0 || !reprocessCondition(result.exept))
+                            right(value to Failure(result.exept))
                         else with(asyncTask) {
                             left(AsyncTask(this.value, this.timeOut, this.attemptsLeft - 1, this.fn))
                         }
