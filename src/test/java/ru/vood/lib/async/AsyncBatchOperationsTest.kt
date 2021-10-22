@@ -90,7 +90,7 @@ internal class AsyncBatchOperationsTest {
         val batch: List<String> = workList
         val asyncBatchOperations = asyncBatch(
             batch = batch,
-            work = { s: String -> s.toInt()       },
+            work = { s: String -> s.toInt() },
         )()
 
         Assertions.assertTrue(threads.size > 1)
