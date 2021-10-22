@@ -97,10 +97,6 @@ internal class AsyncBatchOperationsTest {
             asyncBatchOperations.doTask(any(), any(), DEFAULT_REPROCESS_CONDITION, any(), any())
         }
 
-        coVerify(exactly = 1) {
-            asyncBatchOperations.doTask(any(), any(), DEFAULT_REPROCESS_CONDITION, any(), any() )
-        }
-
         confirmVerified(asyncBatchOperations)
     }
 

@@ -97,7 +97,8 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
     }
 
     companion object {
-        val DEFAULT_REPROCESS_CONDITION: ReprocessCondition = { it is TimeoutCancellationException }
+        //        val DEFAULT_REPROCESS_CONDITION: ReprocessCondition = { it is TimeoutCancellationException }
+        val DEFAULT_REPROCESS_CONDITION: ReprocessCondition = { false }
 
         const val DEFAULT_TIMEOUT = 1000L
         const val DEFAULT_REPROCESS_ATTEMPTS = 0
