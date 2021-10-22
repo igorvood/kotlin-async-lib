@@ -17,7 +17,7 @@ internal class AsyncBatchOperationsTest {
         val threads = mutableSetOf<String>()
         val threadsErr = mutableSetOf<String>()
 
-        AsyncBatchOperations<String, Int, Map<Any, Any>>(
+        val asyncBatchOperations = AsyncBatchOperations(
             batch = workList.map {
                 AsyncValue(
                     value = it,
@@ -25,9 +25,10 @@ internal class AsyncBatchOperationsTest {
                     reprocessAttempts = DEFAULT_REPROCESS_ATTEMPTS
                 )
             },
-            resultCombiner = { mapOf() },
+            resultCombiner = { it.size },
             work = { s: String -> s.toInt() },
-        ).applyBatchOfValues(
+        )
+        val applyBatchOfValues = asyncBatchOperations.applyBatchOfValues(
             doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
             doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
 
@@ -37,6 +38,8 @@ internal class AsyncBatchOperationsTest {
 
         Assertions.assertTrue(threads.size > 1)
         Assertions.assertTrue(threadsErr.size == 0)
+        Assertions.assertEquals(applyBatchOfValues, workList.size)
+
     }
 
 
