@@ -13,7 +13,7 @@ class AsyncBatchOperationsBuilder<T, R, AGG>(
     var work: Function<T, R> = Function { TODO("Ф-ция  work должна быть указана") },
     var resultCombiner: Function<Map<T, Try<R>>, AGG> = Function { TODO("Ф-ция resultCombiner должна быть указана") },
     var reprocessCondition: ReprocessCondition = AsyncBatchOperations.DEFAULT_REPROCESS_CONDITION,
-    var doOnFail: BiConsumer<in T, Throwable> = BiConsumer { _, _ -> },
+    var doOnFail: (T, Throwable)->Unit = { _, _ -> },
     var doOnSuccess: BiConsumer<in T, in R> = BiConsumer { _, _ -> },
     var allThreadTimeout: Long = AsyncValue.DEFAULT_TIMEOUT
 ) {

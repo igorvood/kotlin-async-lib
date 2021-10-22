@@ -9,7 +9,7 @@ import java.util.function.Function
 internal typealias ReprocessCondition = (Exception) -> Boolean
 
 class AsyncBatchOperations<T, R, out AGG>(
-    private val doOnFail: BiConsumer<in T, Throwable>,
+    private val doOnFail: (T, Throwable)->Unit,
     private val doOnSuccess: BiConsumer<in T, in R>,
     private val resultCombiner: Function<Map<T, Try<R>>, out AGG>
 ) {
@@ -58,7 +58,7 @@ class AsyncBatchOperations<T, R, out AGG>(
                         val success: Try<R> = Success(r)
                         return@async task.value to success
                     } catch (e: Exception) {
-                        doOnFail.accept(task.value, e)
+                        doOnFail(task.value, e)
                         return@async task.value to Failure(e)
                     }
                 }
