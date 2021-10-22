@@ -38,29 +38,7 @@ internal class AsyncBatchOperationsTest {
         Assertions.assertTrue(threadsErr.size == 0)
     }
 
-    @Test
-    fun testOnAsyncRun1() {
-
-//        val prepareBatch =
-//            prepareBatch<String, Int, Map<Any, Any>>(workList) withTimeout 2 /*reprocessAttempts 3 */ run {}
-    }
 
 }
 
-inline fun <reified T, reified R, reified AGG> prepareBatch(batch: Iterable<T>): AsyncBatchOperationsBuilder<T, R, AGG> {
-    return AsyncBatchOperationsBuilder(batch)
-}
-
-inline fun <reified T, reified R, reified AGG> withFunction(batch: Iterable<T>): AsyncBatchOperationsBuilder<T, R, AGG> {
-    return AsyncBatchOperationsBuilder(batch)
-}
-
-
-inline infix fun <reified T, reified R, reified AGG> AsyncBatchOperationsBuilder<T, R, AGG>.withTimeout(timeout: Long): AsyncBatchOperationsBuilder<T, R, AGG> {
-    this.allThreadTimeout = timeout
-    return this
-}
-
-inline infix fun <reified T, reified R, reified AGG> AsyncBatchOperationsBuilder<T, R, AGG>.run(b: () -> Unit): AGG =
-    this.build()
 

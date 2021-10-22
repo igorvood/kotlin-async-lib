@@ -3,7 +3,6 @@ package ru.vood.lib.async
 import kotlinx.coroutines.*
 import ru.vood.lib.async.Either.Companion.left
 import ru.vood.lib.async.Either.Companion.right
-import java.util.function.Function
 
 internal typealias ReprocessCondition = (Exception) -> Boolean
 
@@ -18,12 +17,12 @@ class AsyncBatchOperations<T, R, out AGG> internal constructor(
     fun applyBatchOfValues(
         batch: Iterable<AsyncValue<T>>,
         reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION,
-        work: Function<T, R>
+        work: (T) -> R
     ): AGG {
         return runBlocking {
             val result = doTask(
                 crScope,
-                batch.map { t -> AsyncTask(t.value, t.timeout, t.reprocessAttempts) { work.apply(t.value) } },
+                batch.map { t -> AsyncTask(t.value, t.timeout, t.reprocessAttempts) { work(t.value) } },
                 reprocessCondition
             )
 
