@@ -125,12 +125,12 @@ internal class AsyncBatchOperationsTest {
         ) { "Комбайнер отработл не верно, Число запусков обработчика ошибок запусков не равно ожидаемому" }
 
         verify(exactly = 1) {
-            asyncBatchOperations.invoke(any(), any(), DEFAULT_REPROCESS_CONDITION)
-            asyncBatchOperations.run(any(), any(), DEFAULT_REPROCESS_CONDITION)
+            asyncBatchOperations.invoke(any(), any(), any())
+            asyncBatchOperations.run(any(), any(), any())
         }
 
-        coVerify(exactly = 1) {
-            asyncBatchOperations.doTask(any(), any(), DEFAULT_REPROCESS_CONDITION, any(), any())
+        coVerify(exactly = 6) {
+            asyncBatchOperations.doTask(any(), any(), any(), any(), any())
         }
     }
 

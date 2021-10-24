@@ -65,7 +65,9 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
                         val success: Try<R> = Success(r)
                         return@async task.value to success
                     } catch (e: Exception) {
-                        doOnFail(task.value, e)
+                        if (task.attemptsLeft <= 0 || !reprocessCondition(e)) {
+                            doOnFail(task.value, e)
+                        }
                         return@async task.value to Failure(e)
                     }
                 }
