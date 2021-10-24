@@ -133,7 +133,12 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
             batch = batch.map { AsyncValue(it, timeout, reprocessAttempts) },
             work = work,
             resultCombiner = { map ->
-                val count = map.filter { ent -> ent is Failure<*> }.count()
+                val count = map.values.filter { ent ->
+                    when(ent){
+                        is Failure-> true
+                        is Success ->false
+                    }
+                }.count()
                 if (count != 0 && exceptionForAtLastOneFail) error("result async run contains $count exception of ${map.size} runs")
                 count
             },

@@ -76,7 +76,7 @@ internal class AsyncBatchOperationsTest {
 
     @Test
     @DisplayName("Тест на асинхронность запуска без DSL, кастомный комбайнер, с ошибками, c репроцессингом")
-    fun testOnAsyncRun2() {
+    fun testOnAsyncRunReprocess() {
         val workCnt = AtomicInteger(0)
         val workCntSuccess = AtomicInteger(0)
         val workCntError = AtomicInteger(0)
@@ -134,7 +134,32 @@ internal class AsyncBatchOperationsTest {
         }
     }
 
+    @Test
+    @DisplayName("Тест, параметры по умолчанияю. не бросает исключение")
+    fun testOnAsyncRunWithNoException() {
+        val batch = listOf("q1", "q2")
+        val asyncBatch = asyncBatch(
+            batch = batch,
+            work = { it.toInt() },
+            exceptionForAtLastOneFail = false
+        )()
+        Assertions.assertEquals(batch.size, asyncBatch)
+    }
 
+    @Test
+    @DisplayName("Тест, параметры по умолчанияю. бросает исключение")
+    fun testOnAsyncRunWithException() {
+
+        val batch = listOf("q1", "q2")
+        val asyncBatch1 = asyncBatch(
+            batch = batch,
+            work = { it.toInt() },
+            exceptionForAtLastOneFail = true
+        )
+        val assertThrows = Assertions.assertThrows(IllegalStateException::class.java) { asyncBatch1() }
+
+        Assertions.assertEquals("result async run contains ${batch.size} exception of ${batch.size} runs",assertThrows.message)
+    }
 
     private fun testCase(
         workList: List<String>,
