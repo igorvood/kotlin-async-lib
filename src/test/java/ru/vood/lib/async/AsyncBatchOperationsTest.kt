@@ -96,14 +96,16 @@ internal class AsyncBatchOperationsTest {
             workCntSuccess,
             threads,
             reprocessAttempts = 2,
+            reprocessCondition = { true }
         )
+        val cntErr = 67
+        val cntOk = 33
         Assertions.assertEquals(
-            brokenWorkList.size,
+            brokenWorkList.size + cntErr * 2,
             workCnt.get()
         ) { "Число запусков рабочей ф-ции не равно ожидаемому" }
-        val cntErr = 67
         Assertions.assertEquals(cntErr, workCntError.get()) { "Число запусков обработчика ошибок не равно ожидаемому" }
-        val cntOk = 33
+
         Assertions.assertEquals(
             cntOk,
             workCntSuccess.get()
@@ -141,6 +143,7 @@ internal class AsyncBatchOperationsTest {
         workCntSuccess: AtomicInteger,
         threads: MutableSet<String>,
         reprocessAttempts: Int = 0,
+        reprocessCondition: ReprocessCondition = DEFAULT_REPROCESS_CONDITION
     ): Pair<AsyncBatchOperations<String, Int, Pair<List<Try<Int>>, List<Try<Int>>>>, Pair<List<Try<Int>>, List<Try<Int>>>> {
         val asyncBatchOperations = spyk(
             AsyncBatchOperations(
@@ -176,7 +179,7 @@ internal class AsyncBatchOperationsTest {
                 workCntSuccess.incrementAndGet()
                 threads.add(Thread.currentThread().name)
             },
-            reprocessCondition = DEFAULT_REPROCESS_CONDITION,
+            reprocessCondition = reprocessCondition,
         )
         return Pair(asyncBatchOperations, applyBatchOfValues)
     }
