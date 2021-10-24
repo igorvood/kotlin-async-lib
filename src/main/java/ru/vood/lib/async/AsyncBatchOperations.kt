@@ -124,6 +124,7 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
         inline fun <reified T, reified R> asyncBatch(
             batch: Iterable<T>,
             noinline work: (T) -> R,
+            exceptionForAtLastOneFail: Boolean = true,
             timeout: Long = DEFAULT_TIMEOUT,
             reprocessAttempts: Int = DEFAULT_REPROCESS_ATTEMPTS,
             job: CompletableJob = SupervisorJob(),
@@ -133,7 +134,7 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
             work = work,
             resultCombiner = { map ->
                 val count = map.filter { ent -> ent is Failure<*> }.count()
-                if (count != 0) error("result async run contains $count exception of ${map.size} runs")
+                if (count != 0 && exceptionForAtLastOneFail) error("result async run contains $count exception of ${map.size} runs")
                 count
             },
             job = job,

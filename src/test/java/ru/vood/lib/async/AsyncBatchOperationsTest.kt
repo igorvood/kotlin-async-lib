@@ -134,6 +134,8 @@ internal class AsyncBatchOperationsTest {
         }
     }
 
+
+
     private fun testCase(
         workList: List<String>,
         workCnt: AtomicInteger,
@@ -182,88 +184,6 @@ internal class AsyncBatchOperationsTest {
             reprocessCondition = reprocessCondition,
         )
         return Pair(asyncBatchOperations, applyBatchOfValues)
-    }
-
-    @Test
-    @DisplayName("Тест на асинхронность запуска без DSL, вторичный конструктор")
-    fun testOnAsyncRunOtherConstructor() {
-        val threads = mutableSetOf<String>()
-        val threadsErr = mutableSetOf<String>()
-        val asyncBatchOperations = asyncBatch(
-            batch = workList,
-            resultCombiner = { it.size },
-            work = { s: String -> s.toInt() },
-        )
-        val applyBatchOfValues = asyncBatchOperations(
-            doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
-            doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
-            reprocessCondition = DEFAULT_REPROCESS_CONDITION,
-        )
-
-        Assertions.assertTrue(threads.size > 1)
-        Assertions.assertTrue(threadsErr.size == 0)
-        Assertions.assertEquals(applyBatchOfValues, workList.size)
-
-    }
-
-    @Test
-    @DisplayName("Тест на асинхронность запуска без DSL")
-    fun testOnAsyncRunOther1Constructor() {
-        val threads = mutableSetOf<String>()
-        val threadsErr = mutableSetOf<String>()
-        val asyncBatchOperations = asyncBatch(
-            batch = workList,
-            work = { s: String -> s.toInt() },
-        )
-        val applyBatchOfValues = asyncBatchOperations(
-            doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
-            doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
-            reprocessCondition = DEFAULT_REPROCESS_CONDITION,
-        )
-
-        Assertions.assertTrue(threads.size > 1)
-        Assertions.assertTrue(threadsErr.size == 0)
-        Assertions.assertEquals(0, applyBatchOfValues)
-    }
-
-    @Test
-    @DisplayName("Тест на асинхронность запуска без DSL, вторичный конструктор")
-    fun testOnAsyncRunOther1Constructor1() {
-        val threads = mutableSetOf<String>()
-        val threadsErr = mutableSetOf<String>()
-        val asyncBatchOperations = asyncBatch(
-            batch = workList,
-            work = { s: String -> s.toInt() },
-        )
-        val applyBatchOfValues = asyncBatchOperations(
-            doOnFail = { _, _ -> threadsErr.add(Thread.currentThread().name) },
-            doOnSuccess = { _, _ -> threads.add(Thread.currentThread().name) },
-            reprocessCondition = DEFAULT_REPROCESS_CONDITION,
-        )
-
-        Assertions.assertTrue(threads.size > 1)
-        Assertions.assertTrue(threadsErr.size == 0)
-        Assertions.assertEquals(0, applyBatchOfValues)
-    }
-
-    @Test
-    @DisplayName("Тест на асинхронность запуска без DSL, вторичный конструктор")
-    fun testOnAsyncRunMinimalParams() {
-        val threads = mutableSetOf<String>()
-
-        val batch: List<String> = workList
-        val asyncBatchOperations = asyncBatch(
-            batch = batch,
-            work = { s: String ->
-                threads.add(Thread.currentThread().name)
-                s.toInt()
-            },
-        )()
-
-        Assertions.assertTrue(threads.size > 1)
-        Assertions.assertEquals(workList.size, workList.size)
-        Assertions.assertEquals(0, asyncBatchOperations)
-
     }
 
 
