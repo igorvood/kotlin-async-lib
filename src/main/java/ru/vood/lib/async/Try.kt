@@ -13,7 +13,7 @@ sealed class Try<T> private constructor() {
         object TrySequence {
             operator fun <T> Try<T>.component1(): T = when (this) {
                 is Success -> this.value
-                is Failure -> throw this.exept
+                is Failure -> throw this.exception
             }
         }
 
@@ -44,19 +44,19 @@ class Success<T>(val value: T) : Try<T>() {
     override fun toString(): String = "Success($value)"
 }
 
-class Failure<T>(val exept: Exception) : Try<T>() {
+class Failure<T>(val exception: Exception) : Try<T>() {
     override fun <R> map(transform: (T) -> R): Try<R> = this as Try<R>
     override fun <R> flatMap(func: (T) -> Try<R>): Try<R> = this as Try<R>
 
-    override fun <R> recover(transform: (Exception) -> R): Try<R> = Try { transform(exept) }
+    override fun <R> recover(transform: (Exception) -> R): Try<R> = Try { transform(exception) }
 
     override fun <R> recoverWith(transform: (Exception) -> Try<R>): Try<R> =
-        Try { transform(exept) }.let {
+        Try { transform(exception) }.let {
             when (it) {
                 is Success -> it.value
                 is Failure -> it as Try<R>
             }
         }
 
-    override fun toString(): String = "Failure(${exept.message})"
+    override fun toString(): String = "Failure(${exception.message})"
 }

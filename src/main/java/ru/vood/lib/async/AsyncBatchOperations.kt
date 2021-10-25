@@ -80,8 +80,8 @@ class AsyncBatchOperations<T, R, out AGG> constructor(
                 when (result) {
                     is Success -> right(valueRes)
                     is Failure ->
-                        if (asyncTask.attemptsLeft <= 0 || !reprocessCondition(result.exept))
-                            right(value to Failure(result.exept))
+                        if (asyncTask.attemptsLeft <= 0 || !reprocessCondition(result.exception))
+                            right(value to Failure(result.exception))
                         else with(asyncTask) {
                             left(AsyncTask(this.value, this.timeOut, this.attemptsLeft - 1, this.fn))
                         }
