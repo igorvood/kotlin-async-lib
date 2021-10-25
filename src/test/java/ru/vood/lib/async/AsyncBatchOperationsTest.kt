@@ -70,8 +70,6 @@ internal class AsyncBatchOperationsTest {
         coVerify(exactly = 1) {
             asyncBatchOperations.doTask(any(), any(), DEFAULT_REPROCESS_CONDITION, any(), any())
         }
-
-//        confirmVerified(asyncBatchOperations)
     }
 
     @Test
